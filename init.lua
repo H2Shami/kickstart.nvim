@@ -84,6 +84,15 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
+-- Augment workspace folder config - recommended by augment
+vim.g.augment_workspace_folders = {
+  '~/Work/JobZod/next_app/',
+  '~/Work/blumen_systems/reg_LLM/',
+  '~/Work/blumen_systems/blumen_next_ai/',
+  '~/Work/blumen_systems/lup_ingest/',
+  '~/Work/blumen_systems/geospatial/',
+}
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -192,6 +201,16 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- keybinding to start Aider with the current file only as context
+vim.keymap.set('n', '<leader>ac', function()
+  local current_file = vim.fn.expand '%:p'
+  vim.cmd(string.format('AiderOpen %s', vim.fn.shellescape(current_file)))
+  -- Wait a bit before entering insert mode
+  vim.defer_fn(function()
+    vim.cmd 'startinsert'
+  end, 100)
+end, { desc = 'Open Aider with current file' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -269,6 +288,8 @@ require('lazy').setup({
     },
   },
 
+  { 'augmentcode/augment.vim' },
+
   {
     'joshuavial/aider.nvim',
     opts = {
@@ -303,7 +324,7 @@ require('lazy').setup({
         -- set icon mappings to true if you have a Nerd Font
         mappings = vim.g.have_nerd_font,
         -- If you are using a Nerd Font: set icons.keys to an empty table which will use the
-        -- default whick-key.nvim defined Nerd Font icons, otherwise define a string table
+        -- default which-key.nvim defined Nerd Font icons, otherwise define a string table
         keys = vim.g.have_nerd_font and {} or {
           Up = '<Up> ',
           Down = '<Down> ',
@@ -799,7 +820,7 @@ require('lazy').setup({
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          ['<Tab>'] = cmp.mapping.confirm { select = true },
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
@@ -906,6 +927,7 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
+  { 'ellisonleao/glow.nvim', config = true, cmd = 'Glow' },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
