@@ -909,14 +909,14 @@ require('lazy').setup({
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
 
+        -- Accept ([y]es) the completion.
+        --  This will auto-import if your LSP supports it.
+        --  This will expand snippets if the LSP sent a snippet.
+        ['<Tab>'] = { 'accept', 'fallback' },
+
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
       },
-
-          -- Accept ([y]es) the completion.
-          --  This will auto-import if your LSP supports it.
-          --  This will expand snippets if the LSP sent a snippet.
-          ['<Tab>'] = cmp.mapping.confirm { select = true },
 
       appearance = {
         -- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'
@@ -1090,6 +1090,20 @@ require('lazy').setup({
     },
   },
 })
+
+-- Prefer Augment on <S-Tab>, else let blink (and other mappings) handle it.
+vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
+  -- If Augment exposes a visibility check, prefer it
+  if vim.fn.exists ':AugmentAccept' == 2 then
+    local has_is_visible = vim.fn.exists '*augment#is_visible' == 1
+    if (not has_is_visible) or (has_is_visible and vim.fn['augment#is_visible']() == 1) then
+      vim.cmd 'AugmentAccept'
+      return ''
+    end
+  end
+  -- Fall back to the original <S-Tab> so blink’s preset still works
+  return vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true)
+end, { expr = true, silent = true, desc = 'Accept Augment completion or fallback' })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
