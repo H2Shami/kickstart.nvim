@@ -88,7 +88,6 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.augment_workspace_folders = {
   '~/Work/JobZod/next_app/',
   '~/Work/blumen_systems/reg_LLM/',
-  '~/Work/blumen_systems/blumen_next_ai/',
   '~/Work/blumen_systems/lup_ingest/',
   '~/Work/blumen_systems/geospatial/',
 }
@@ -100,7 +99,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -301,6 +300,33 @@ require('lazy').setup({
         changedelete = { text = '~' },
       },
     },
+    config = function()
+      require('gitsigns').setup {
+        current_line_blame = true,
+        signs = {
+          add = { text = '+' },
+          change = { text = '~' },
+          delete = { text = '_' },
+          topdelete = { text = '‾' },
+          changedelete = { text = '~' },
+        },
+      }
+
+      -- Git hunk keymaps
+      vim.keymap.set('n', '<leader>hs', require('gitsigns').stage_hunk, { desc = 'Stage hunk' })
+      vim.keymap.set('n', '<leader>hr', require('gitsigns').reset_hunk, { desc = 'Reset hunk' })
+      vim.keymap.set('n', '<leader>hS', require('gitsigns').stage_buffer, { desc = 'Stage buffer' })
+      vim.keymap.set('n', '<leader>hu', require('gitsigns').undo_stage_hunk, { desc = 'Undo stage hunk' })
+      vim.keymap.set('n', '<leader>hR', require('gitsigns').reset_buffer, { desc = 'Reset buffer' })
+      vim.keymap.set('n', '<leader>hp', require('gitsigns').preview_hunk, { desc = 'Preview hunk' })
+      vim.keymap.set('n', '<leader>hd', require('gitsigns').diffthis, { desc = 'Diff this' })
+      vim.keymap.set('v', '<leader>hs', function()
+        require('gitsigns').stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
+      end, { desc = 'Stage hunk' })
+      vim.keymap.set('v', '<leader>hr', function()
+        require('gitsigns').reset_hunk { vim.fn.line '.', vim.fn.line 'v' }
+      end, { desc = 'Reset hunk' })
+    end,
   },
 
   { 'augmentcode/augment.vim' },
