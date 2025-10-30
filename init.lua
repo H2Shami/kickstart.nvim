@@ -106,6 +106,14 @@ vim.g.have_nerd_font = true
 -- NOTE: You can change these options as you wish!
 --  For more options, you can see `:help option-list`
 
+-- Indentation settings - use 2 spaces instead of tabs
+vim.o.expandtab = true -- Use spaces instead of tabs
+vim.o.tabstop = 2 -- Number of spaces that a <Tab> in the file counts for
+vim.o.shiftwidth = 2 -- Number of spaces to use for each step of (auto)indent
+vim.o.softtabstop = 2 -- Number of spaces that a <Tab> counts for while editing
+vim.o.smartindent = true -- Smart autoindenting when starting a new line
+vim.o.autoindent = true -- Copy indent from current line when starting new line
+
 -- Make line numbers default
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
@@ -176,6 +184,15 @@ vim.o.confirm = true
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
+
+vim.opt.guicursor = {
+  'n-v-c:block', -- Normal, Visual, Command modes: block cursor
+  'i-ci-ve:ver25', -- Insert, Command-line Insert, Visual Exclusive: vertical bar
+  'r-cr:hor20', -- Replace modes: horizontal bar
+  'o:hor50', -- Operator-pending: half-height bar
+  'a:blinkwait700-blinkoff400-blinkon250', -- blinking behavior
+}
+
 vim.opt.foldmethod = 'indent'
 vim.opt.foldlevel = 99
 -- Clear highlights on search when pressing <Esc> in normal mode
@@ -343,7 +360,7 @@ require('lazy').setup({
     end,
   },
 
-  { 'augmentcode/augment.vim' },
+  -- { 'augmentcode/augment.vim' },
 
   {
     'joshuavial/aider.nvim',
@@ -609,7 +626,7 @@ require('lazy').setup({
 
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
-          map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
+          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
@@ -746,6 +763,7 @@ require('lazy').setup({
         clangd = {},
         -- gopls = {},
         pyright = {},
+        buf = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -788,6 +806,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'prettier', -- Used to format TypeScript/JavaScript (tabs to spaces, 2 space indent)
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -840,11 +859,11 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        -- Add Prettier for TypeScript files (tabs to spaces, 2 space indentation)
+        typescript = { 'prettier' },
+        typescriptreact = { 'prettier' },
+        javascript = { 'prettier' },
+        javascriptreact = { 'prettier' },
       },
     },
   },
@@ -1091,19 +1110,17 @@ require('lazy').setup({
   },
 })
 
--- Prefer Augment on <S-Tab>, else let blink (and other mappings) handle it.
+-- Prefer Copilot on <S-Tab>, else let blink (and other mappings) handle it.
 vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
-  -- If Augment exposes a visibility check, prefer it
-  if vim.fn.exists ':AugmentAccept' == 2 then
-    local has_is_visible = vim.fn.exists '*augment#is_visible' == 1
-    if (not has_is_visible) or (has_is_visible and vim.fn['augment#is_visible']() == 1) then
-      vim.cmd 'AugmentAccept'
-      return ''
+  if vim.fn.exists ':Copilot' == 2 then
+    local copilot_suggestion = vim.fn['copilot#GetDisplayedSuggestion']()
+    if copilot_suggestion.text ~= '' then
+      -- Insert the suggestion text directly
+      return copilot_suggestion.text
     end
   end
-  -- Fall back to the original <S-Tab> so blink’s preset still works
   return vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true)
-end, { expr = true, silent = true, desc = 'Accept Augment completion or fallback' })
+end, { expr = true, silent = true, desc = 'Accept Copilot completion or fallback' })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
