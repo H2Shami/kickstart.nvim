@@ -1110,17 +1110,62 @@ require('lazy').setup({
   },
 })
 
--- Prefer Copilot on <S-Tab>, else let blink (and other mappings) handle it.
-vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
-  if vim.fn.exists ':Copilot' == 2 then
-    local copilot_suggestion = vim.fn['copilot#GetDisplayedSuggestion']()
-    if copilot_suggestion.text ~= '' then
-      -- Insert the suggestion text directly
-      return copilot_suggestion.text
-    end
+local function accept_copilot()
+  -- Accept Copilot suggestion and prevent extra chars
+  local keys = vim.fn['copilot#Accept']()
+  -- If Copilot returns a string, feed it as keys
+  if type(keys) == 'string' and keys ~= '' then
+    vim.api.nvim_feedkeys(keys, 'i', true)
   end
-  return vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true)
-end, { expr = true, silent = true, desc = 'Accept Copilot completion or fallback' })
+  -- Return empty string so nothing else is inserted
+  return ''
+end
+local has_copilot = vim.fn.exists ':Copilot' == 2
+local function has_popup()
+  -- blink.cmp exposes a global for menu visibility
+  local ok, blink = pcall(require, 'blink.cmp')
+  if ok and blink.is_menu_visible then
+    return blink.is_menu_visible()
+  end
+  -- fallback for nvim-cmp
+  local cmp_ok, cmp = pcall(require, 'cmp')
+  if cmp_ok and cmp.visible then
+    return cmp.visible()
+  end
+  return false
+end
+
+local function has_copilot_suggestion()
+  if not has_copilot then
+    return false
+  end
+  local s = vim.fn['copilot#GetDisplayedSuggestion']()
+  return s and s.text and s.text ~= ''
+end
+
+vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+  if has_popup() and has_copilot_suggestion() then
+    return vim.api.nvim_replace_termcodes('<Tab>', true, true, true)
+  elseif has_popup() then
+    return vim.api.nvim_replace_termcodes('<Tab>', true, true, true)
+  elseif has_copilot_suggestion() then
+    return accept_copilot()
+  else
+    return vim.api.nvim_replace_termcodes('<Tab>', true, true, true)
+  end
+end, { expr = true, silent = true, desc = 'Tab: select completion or Copilot' })
+
+vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
+  if has_popup() and has_copilot_suggestion() then
+    return accept_copilot()
+  elseif has_popup() then
+    return vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true)
+  elseif has_copilot_suggestion() then
+    return accept_copilot()
+  else
+    return vim.api.nvim_replace_termcodes('<S-Tab>', true, true, true)
+  end
+end, { expr = true, silent = true, desc = 'S-Tab: select Copilot or completion' })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
